@@ -12,5 +12,7 @@ import lombok.Setter;
 public class Response {
     private String data;
     private  String status;
-
+    private Long id;
+    private String name;
+    private String email;
 }

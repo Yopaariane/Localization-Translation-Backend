@@ -96,4 +96,10 @@ public class ProjectService {
         //projectDto.setOrganizationId(project.getOrganization().getId());
         return projectDto;
     }
+
+    public List<ProjectDto> getUserProjects(Long userId) {
+        return projectRepository.findByOwner_Id(userId).stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
 }

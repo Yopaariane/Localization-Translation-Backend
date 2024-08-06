@@ -30,6 +30,12 @@ public class ProjectController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<ProjectDto>> getUserProjects(@PathVariable Long userId) {
+        List<ProjectDto> projects = projectService.getUserProjects(userId);
+        return ResponseEntity.ok(projects);
+    }
+
     @GetMapping
     public ResponseEntity<List<ProjectDto>> getAllProjects() {
         List<ProjectDto> projects = projectService.getAllProjects();

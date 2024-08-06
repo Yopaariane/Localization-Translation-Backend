@@ -29,15 +29,23 @@ public class UserController {
     public ResponseEntity<Response> registerUser(@RequestBody UserDto user) {
         Optional<User> existingUser = userService.findByUsername(user.getName());
         if (existingUser.isPresent()) {
-            Response response = new Response();
-            response.setStatus("NOTOK");
-            response.setData("Username already exists");
+            Response response = new Response(
+                    "NOTOK",
+                    "Login failed",
+                    null,
+                    null,
+                    null
+            );
             return ResponseEntity.status(401).body(response);
         }
         userService.saveUser(user);
-        Response response = new Response();
-        response.setStatus("OK");
-        response.setData("SignUp successful");
+        Response response = new Response(
+                "OK",
+                "SignUp successful",
+                user.getId(),
+                user.getName(),
+                user.getEmail()
+        );
         return ResponseEntity.ok(response);
     }
 

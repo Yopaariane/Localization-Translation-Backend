@@ -1,16 +1,14 @@
 package com.myapp.localizationApp.service;
 
 import com.myapp.localizationApp.dto.ProjectLanguageDto;
-import com.myapp.localizationApp.dto.UserRoleDto;
-import com.myapp.localizationApp.entity.Project;
 import com.myapp.localizationApp.entity.ProjectLanguage;
-import com.myapp.localizationApp.entity.UserRole;
 import com.myapp.localizationApp.repository.LanguageRepository;
 import com.myapp.localizationApp.repository.ProjectLanguageRepository;
 import com.myapp.localizationApp.repository.ProjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,7 +30,7 @@ public class ProjectLanguageService {
     }
 
     public List<ProjectLanguageDto> getLanguageByProjectId(Long projectId){
-        List<ProjectLanguage> projectLanguages = projectLanguageRepository.findByProjectId(projectId);
+        List<ProjectLanguage> projectLanguages = projectLanguageRepository.findByProjectId(BigInteger.valueOf(projectId));
         return projectLanguages.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 

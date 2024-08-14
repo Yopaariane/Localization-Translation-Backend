@@ -1,10 +1,11 @@
 package com.myapp.localizationApp.service;
 
+import com.myapp.localizationApp.dto.LanguageDto;
 import com.myapp.localizationApp.dto.ProjectDto;
 import com.myapp.localizationApp.dto.UserRoleDto;
-import com.myapp.localizationApp.entity.Organization;
-import com.myapp.localizationApp.entity.Project;
-import com.myapp.localizationApp.entity.User;
+import com.myapp.localizationApp.entity.*;
+import com.myapp.localizationApp.repository.LanguageRepository;
+import com.myapp.localizationApp.repository.ProjectLanguageRepository;
 import com.myapp.localizationApp.repository.ProjectRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class ProjectService {
 
     @Autowired
     private UserRoleService userRoleService;
+
+    @Autowired
+    ProjectLanguageRepository  projectLanguageRepository;
 
     public ProjectDto createProject(ProjectDto projectDto){
         Project project = convertToEntity(projectDto);
@@ -88,12 +92,29 @@ public class ProjectService {
     }
 
     private ProjectDto convertToDto(Project project) {
+        // Convert ProjectLanguage entities to Language objects
+        List<Language> languages = projectLanguageRepository.findByProjectId(project.getId())
+                .stream()
+                .map(ProjectLanguage::getLanguage)
+                .toList();
+
+        // Convert Language objects to LanguageDto objects
+        List<LanguageDto> languageDto = languages.stream()
+                .map(language -> {
+                    LanguageDto dto = new LanguageDto();
+                    dto.setId(language.getId());
+                    dto.setCode(language.getCode());
+                    dto.setName(language.getName());
+                    return dto;
+                })
+                .toList();
+        System.out.println(languageDto);
         ProjectDto projectDto = new ProjectDto();
         projectDto.setId(project.getId().longValue());
         projectDto.setName(project.getName());
         projectDto.setDescription(project.getDescription());
         projectDto.setOwnerId(project.getOwner().getId().longValue());
-        //projectDto.setOrganizationId(project.getOrganization().getId());
+        projectDto.setLanguages(languageDto);
         return projectDto;
     }
 

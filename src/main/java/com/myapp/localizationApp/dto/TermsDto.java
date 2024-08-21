@@ -14,5 +14,5 @@ public class TermsDto {
     private String context;
     private Timestamp createAt;
     private Long projectId;
-    private String stringNumber;
+    private int stringNumber;
 }

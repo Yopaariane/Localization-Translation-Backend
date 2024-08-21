@@ -2,15 +2,15 @@ package com.myapp.localizationApp.service;
 
 import com.myapp.localizationApp.configuration.ResourceNotFoundException;
 import com.myapp.localizationApp.dto.TranslationsDto;
-import com.myapp.localizationApp.entity.Language;
-import com.myapp.localizationApp.entity.Terms;
-import com.myapp.localizationApp.entity.Translations;
-import com.myapp.localizationApp.entity.User;
+import com.myapp.localizationApp.entity.*;
 import com.myapp.localizationApp.repository.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,6 +25,8 @@ public class TranslationsService {
 
     @Autowired
     private TermsRepository termsRepository;
+    @Autowired
+    private ProjectRepository projectRepository;
 
     @Autowired
     private ProjectLanguageRepository projectLanguageRepository;
@@ -142,4 +144,111 @@ public class TranslationsService {
         return translationsRepository.countTranslationsByProjectId(projectId);
     }
 
+    public double getTranslationProgressForTerm(Long termId) {
+        Terms term = termsRepository.findById(termId)
+                .orElseThrow(() -> new ResourceNotFoundException("Term not found"));
+
+        Long totalLanguages = projectLanguageRepository.countLanguagesByProjectId(term.getProject().getId().longValue());
+        Long translatedLanguages = translationsRepository.countTranslationsByTermId(termId);
+
+        if (totalLanguages == 0) {
+            return 0.0;
+        }
+
+        double progress = (double) translatedLanguages / totalLanguages * 100;
+
+        return roundToOneDecimalPlace(progress);
+    }
+
+    public double getTranslationProgressForLanguage(Long languageId, Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id " + projectId));
+
+        ProjectLanguage projectLanguage = projectLanguageRepository.findByLanguageIdAndProjectId(languageId, projectId);
+
+        // Count total terms in the project
+        long totalTerms = termsRepository.countByProjectId(projectId);
+
+        // Count translated terms for the language within the project
+        Long translatedTerms = translationsRepository.countTranslationsByLanguageAndProject(languageId, projectId);
+
+        if (totalTerms == 0 || translatedTerms == null) {
+            return 0.0;
+        }
+
+        double progress = (double) translatedTerms / totalTerms * 100;
+
+        return roundToOneDecimalPlace(progress);
+    }
+
+    public double getOverallTranslationProgressForProject(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id " + projectId));
+
+        // Retrieve all ProjectLanguages for the given project
+        List<ProjectLanguage> projectLanguages = projectLanguageRepository.findByProjectId(BigInteger.valueOf(projectId));
+
+        if (projectLanguages.isEmpty()) {
+            return 0.0;
+        }
+
+        double totalProgress = 0.0;
+
+        for (ProjectLanguage projectLanguage : projectLanguages) {
+            Long languageId = projectLanguage.getLanguage().getId();
+            double languageProgress = getTranslationProgressForLanguage(languageId, projectId);
+            totalProgress += languageProgress;
+        }
+
+        double overallProgress = totalProgress / projectLanguages.size();
+
+        return roundToOneDecimalPlace(overallProgress);
+    }
+
+    public double getAverageTranslationProgressForUser(Long userId) {
+        List<Project> projects = projectRepository.findByOwner_Id(userId);
+
+        if (projects.isEmpty()) {
+            throw new ResourceNotFoundException("No projects found for user with id " + userId);
+        }
+
+        double totalProgress = 0.0;
+        int projectCount = 0;
+
+        for (Project project : projects) {
+            double projectProgress = getOverallTranslationProgressForProject(project.getId().longValue());
+
+            // Sum up the progress
+            totalProgress += projectProgress;
+            projectCount++;
+        }
+
+        //average progress
+        double averageProgress = projectCount > 0 ? totalProgress / projectCount : 0.0;
+
+        return Math.round(averageProgress * 10) / 10.0;
+    }
+
+
+    private double roundToOneDecimalPlace(double value) {
+        BigDecimal bd = new BigDecimal(Double.toString(value));
+        bd = bd.setScale(1, RoundingMode.HALF_UP);
+        return bd.doubleValue();
+    }
+
+    // Total number of translated strings
+//    public double calculateStringProgressForUser(Long userId) {
+//        Long totalTranslatedStrings = translationsRepository.sumTranslatedStringsForUser(userId);
+//
+//        // Default to 0 if no translations are found
+//        if (totalTranslatedStrings == null) {
+//            totalTranslatedStrings = 0L;
+//        }
+//
+//        // Calculate the progress percentage
+//        double progress = ((double) totalTranslatedStrings / 10000) * 100;
+//
+//        // Round to one decimal place
+//        return Math.round(progress * 10.0) / 10.0;
+//    }
 }

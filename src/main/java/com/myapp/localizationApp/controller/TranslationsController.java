@@ -51,4 +51,34 @@ public class TranslationsController {
         long count = translationsService.countTranslationsByProjectId(projectId);
         return ResponseEntity.ok(count);
     }
+
+    @GetMapping("/{termId}/progress")
+    public ResponseEntity<Double> getTranslationProgressForTerm(@PathVariable Long termId) {
+        double progress = translationsService.getTranslationProgressForTerm(termId);
+        return ResponseEntity.ok(progress);
+    }
+
+    @GetMapping("/progress/{languageId}/{projectId}")
+    public ResponseEntity<Double> getTranslationProgressForLanguage(@PathVariable Long languageId, @PathVariable Long projectId) {
+        double progress = translationsService.getTranslationProgressForLanguage(languageId, projectId);
+        return ResponseEntity.ok(progress);
+    }
+
+    @GetMapping("/progress/{projectId}")
+    public  ResponseEntity<Double> getOverallTranslationProgressForProject(@PathVariable Long projectId) {
+        double progress = translationsService.getOverallTranslationProgressForProject(projectId);
+        return ResponseEntity.ok(progress);
+    }
+
+    @GetMapping("/translation-progress/users/{userId}")
+    public ResponseEntity<Double> getAverageTranslationProgressForUser(@PathVariable Long userId) {
+        double averageProgress = translationsService.getAverageTranslationProgressForUser(userId);
+        return ResponseEntity.ok(averageProgress);
+    }
+
+//    @GetMapping("/string-progress/user/{userId}")
+//    public ResponseEntity<Double> getStringProgressForUser(@PathVariable Long userId) {
+//        double progress = translationsService.calculateStringProgressForUser(userId);
+//        return ResponseEntity.ok(progress);
+//    }
 }

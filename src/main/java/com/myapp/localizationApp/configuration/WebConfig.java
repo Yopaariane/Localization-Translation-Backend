@@ -1,6 +1,7 @@
 package com.myapp.localizationApp.configuration;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -14,6 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins("http://10.12.1.209:4200")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
+                        .exposedHeaders(HttpHeaders.CONTENT_DISPOSITION)
                         .allowCredentials(true);
     }
 }

@@ -23,8 +23,4 @@ public class Project {
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
-
-//    @ManyToOne
-//    @JoinColumn(name = "organization_id")
-//    private Organization organization;
 }

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +33,10 @@ public class ProjectLanguageService {
     public List<ProjectLanguageDto> getLanguageByProjectId(Long projectId){
         List<ProjectLanguage> projectLanguages = projectLanguageRepository.findByProjectId(BigInteger.valueOf(projectId));
         return projectLanguages.stream().map(this::convertToDto).collect(Collectors.toList());
+    }
+
+    public Optional<ProjectLanguageDto> getProjectLanguageById(Long id){
+        return  projectLanguageRepository.findById(id).map(this::convertToDto);
     }
 
     public void deleteProjectLanguage( Long id){

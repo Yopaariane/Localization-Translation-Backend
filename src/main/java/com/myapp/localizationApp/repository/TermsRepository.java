@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface TermsRepository extends JpaRepository<Terms, Long> {
     List<Terms> findByProjectId(Long projectId);
+
     long countByProjectId(Long projectId);
 }

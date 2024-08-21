@@ -45,8 +45,14 @@ public class TermsController {
         return ResponseEntity.ok(termsList);
     }
 
-    @GetMapping("/count")
-    public ResponseEntity<Long> getTermsCountByProjectId(@RequestParam Long projectId) {
+    @GetMapping("/project/{projectId}/totalStrings")
+    public ResponseEntity<Integer> getTotalStringNumberByProjectId(@PathVariable Long projectId) {
+        int totalStringNumber = termsService.getTotalStringNumberByProjectId(projectId);
+        return ResponseEntity.ok(totalStringNumber);
+    }
+
+    @GetMapping("/{projectId}/count")
+    public ResponseEntity<Long> getTermsCountByProjectId(@PathVariable Long projectId) {
         long count = termsService.countTermsByProjectId(projectId);
         return ResponseEntity.ok(count);
     }

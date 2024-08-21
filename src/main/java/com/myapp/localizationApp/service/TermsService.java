@@ -85,6 +85,13 @@ public class TermsService {
                 .map(term -> modelMapper.map(term, TermsDto.class))
                 .collect(Collectors.toList());
     }
+
+    public int getTotalStringNumberByProjectId(Long projectId) {
+        List<Terms> termsList = termsRepository.findByProjectId(projectId);
+        return termsList.stream()
+                .mapToInt(Terms::getStringNumber)
+                .sum();
+    }
     
     public long countTermsByProjectId(Long projectId) {
         return termsRepository.countByProjectId(projectId);

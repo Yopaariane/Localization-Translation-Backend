@@ -4,6 +4,7 @@ import com.myapp.localizationApp.dto.UserDto;
 import com.myapp.localizationApp.entity.User;
 import com.myapp.localizationApp.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,8 @@ import java.util.List;
 public class UserService {
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    ModelMapper modelMapper;
 
     // Authentication management
     @Autowired
@@ -68,5 +71,15 @@ public class UserService {
 
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    public UserDto getUserByEmail(String email) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            return modelMapper.map(user, UserDto.class);
+        } else {
+            throw new RuntimeException("User not found with email: " + email);
+        }
     }
 }

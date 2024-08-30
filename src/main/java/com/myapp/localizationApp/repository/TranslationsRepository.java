@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigInteger;
 import java.util.List;
 
 public interface TranslationsRepository extends JpaRepository<Translations, Long> {
@@ -28,7 +29,11 @@ public interface TranslationsRepository extends JpaRepository<Translations, Long
     @Query("SELECT COUNT(t.id) FROM Translations t WHERE t.language.id = :languageId AND t.term.project.id = :projectId")
     Long countTranslationsByLanguageAndProject(@Param("languageId") Long languageId, @Param("projectId") Long projectId);
 
-//    @Query("SELECT SUM(t.stringNumber) FROM Translations tr JOIN tr.term t WHERE tr.user.id = :userId")
-//    Long sumTranslatedStringsForUser(@Param("userId") Long userId);
+    @Query("SELECT SUM(t.stringNumber) FROM Translations tr " +
+            "JOIN tr.term t " +
+            "JOIN t.project p " +
+            "WHERE p.owner.id = :ownerId")
+    Integer sumStringNumbersByOwnerId(@Param("ownerId") BigInteger ownerId);
 
+    Translations findByTermIdAndLanguageIdAndCreatorId(Long termId, Long languageId, BigInteger creatorId);
 }

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigInteger;
+import java.sql.Timestamp;
 
 @Setter
 @Getter
@@ -19,6 +20,9 @@ public class Project {
     private String name;
 
     private String description;
+
+    @Column(nullable = false, updatable = false, insertable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private Timestamp createdAt;
 
     @ManyToOne
     @JoinColumn(name = "owner_id", nullable = false)

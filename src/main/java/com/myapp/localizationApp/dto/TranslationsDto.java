@@ -3,6 +3,7 @@ package com.myapp.localizationApp.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -13,7 +14,7 @@ public class TranslationsDto {
     private String translationText;
     private Long termId;
     private Long languageId;
-    private Long creatorId;
+    private BigInteger creatorId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

@@ -19,4 +19,6 @@ public interface ProjectLanguageRepository extends JpaRepository<ProjectLanguage
 
     @Query("SELECT pl.project.id FROM ProjectLanguage pl WHERE pl.language.id = :languageId")
     Optional<Long> findProjectIdByLanguageId(@Param("languageId") Long languageId);
+
+    boolean existsByProjectIdAndLanguageId(Long projectId, Long languageId);
 }

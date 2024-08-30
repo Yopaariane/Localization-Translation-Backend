@@ -2,6 +2,7 @@ package com.myapp.localizationApp.controller;
 
 import com.myapp.localizationApp.dto.ProjectDto;
 import com.myapp.localizationApp.dto.ProjectLanguageDto;
+import com.myapp.localizationApp.entity.ProjectLanguage;
 import com.myapp.localizationApp.service.ProjectLanguageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -40,5 +41,11 @@ public class ProjectLanguageController {
     public ResponseEntity<Void> deleteProjectLanguage(@PathVariable Long id){
         projectLanguageService.deleteProjectLanguage(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/project/{projectId}/language/{languageId}")
+    public ResponseEntity<ProjectLanguageDto> getProjectLanguage(@PathVariable Long projectId, @PathVariable Long languageId) {
+        ProjectLanguageDto projectLanguageDto = projectLanguageService.getByLanguageIdAndProjectId(languageId, projectId);
+        return ResponseEntity.ok(projectLanguageDto);
     }
 }

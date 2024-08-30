@@ -1,10 +1,14 @@
 package com.myapp.localizationApp.service;
 
+import com.myapp.localizationApp.configuration.ResourceNotFoundException;
 import com.myapp.localizationApp.dto.ProjectLanguageDto;
+import com.myapp.localizationApp.entity.Language;
+import com.myapp.localizationApp.entity.Project;
 import com.myapp.localizationApp.entity.ProjectLanguage;
 import com.myapp.localizationApp.repository.LanguageRepository;
 import com.myapp.localizationApp.repository.ProjectLanguageRepository;
 import com.myapp.localizationApp.repository.ProjectRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +27,9 @@ public class ProjectLanguageService {
 
     @Autowired
     private LanguageRepository languageRepository;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     public ProjectLanguageDto assignLanguageToProject(ProjectLanguageDto projectLanguageDto){
         ProjectLanguage projectLanguage = convertToEntity(projectLanguageDto);
@@ -57,4 +64,36 @@ public class ProjectLanguageService {
         projectLanguage.setLanguage(languageRepository.findById(projectLanguageDto.getLanguageId()).orElse(null));
         return projectLanguage;
     }
+
+    public boolean existsByProjectIdAndLanguageId(Long projectId, Long languageId) {
+        return projectLanguageRepository.existsByProjectIdAndLanguageId(projectId, languageId);
+    }
+
+    public ProjectLanguageDto getByLanguageIdAndProjectId(Long languageId, Long projectId) {
+        ProjectLanguage projectLanguage = projectLanguageRepository
+                .findByLanguageIdAndProjectId(languageId, projectId);
+
+        return modelMapper.map(projectLanguage, ProjectLanguageDto.class);
+    }
+
+//    public ProjectLanguageDto createProjectLanguage(Long projectId, Long languageId) {
+//        if (existsByProjectIdAndLanguageId(projectId, languageId)) {
+//            Project project = projectRepository.findById(projectId)
+//                    .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
+//
+//            Language language = languageRepository.findById(languageId)
+//                    .orElseThrow(() -> new ResourceNotFoundException("Language not found with id: " + languageId));
+//
+//            ProjectLanguage projectLanguage = new ProjectLanguage();
+//            projectLanguage.setProject(project);
+//            projectLanguage.setLanguage(language);
+//
+//            ProjectLanguage savedProjectLanguage = projectLanguageRepository.save(projectLanguage);
+//
+//            return convertToDto(savedProjectLanguage);
+//        } else {
+//            throw new ResourceNotFoundException("ProjectLanguage already exists for projectId: " + projectId + " and languageId: " + languageId);
+//        }
+//    }
+
 }

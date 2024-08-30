@@ -12,7 +12,6 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "users")
 public class User {
-    // Getters and Setters
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private BigInteger id;

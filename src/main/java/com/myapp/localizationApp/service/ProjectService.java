@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -113,6 +114,7 @@ public class ProjectService {
         projectDto.setId(project.getId().longValue());
         projectDto.setName(project.getName());
         projectDto.setDescription(project.getDescription());
+        projectDto.setCreateAt(project.getCreatedAt());
         projectDto.setOwnerId(project.getOwner().getId().longValue());
         projectDto.setLanguages(languageDto);
         return projectDto;

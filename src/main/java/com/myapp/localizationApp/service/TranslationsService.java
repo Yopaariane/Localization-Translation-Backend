@@ -1,6 +1,7 @@
 package com.myapp.localizationApp.service;
 
 import com.myapp.localizationApp.configuration.ResourceNotFoundException;
+import com.myapp.localizationApp.dto.ProjectDto;
 import com.myapp.localizationApp.dto.TranslationsDto;
 import com.myapp.localizationApp.entity.*;
 import com.myapp.localizationApp.repository.*;
@@ -8,10 +9,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,7 +25,8 @@ public class TranslationsService {
     private TermsRepository termsRepository;
     @Autowired
     private ProjectRepository projectRepository;
-
+    @Autowired
+    private ProjectService projectService;
     @Autowired
     private ProjectLanguageRepository projectLanguageRepository;
 
@@ -53,7 +52,7 @@ public class TranslationsService {
         translations.setLanguage(language);
 
         // Fetch and set the User entity
-        User creator = userRepository.findById(translationsDto.getCreatorId())
+        User creator = userRepository.findById(translationsDto.getCreatorId().longValue())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + translationsDto.getCreatorId()));
         translations.setCreator(creator);
 
@@ -92,7 +91,7 @@ public class TranslationsService {
         }
 
         if (translationsDto.getCreatorId() != null) {
-            User creator = userRepository.findById(translationsDto.getCreatorId())
+            User creator = userRepository.findById(translationsDto.getCreatorId().longValue())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + translationsDto.getCreatorId()));
             existingTranslation.setCreator(creator);
         }
@@ -139,6 +138,12 @@ public class TranslationsService {
                 .map(translation -> modelMapper.map(translation, TranslationsDto.class))
                 .collect(Collectors.toList());
     }
+
+    public TranslationsDto findByTermIdAndLanguageIdAndCreatorId(Long termId, Long languageId, BigInteger creatorId) {
+        Translations translationEntity = translationsRepository.findByTermIdAndLanguageIdAndCreatorId(termId, languageId, creatorId);
+        return translationEntity == null ? null : modelMapper.map(translationEntity, TranslationsDto.class);
+    }
+
 
     public Long countTranslationsByProjectId(Long projectId) {
         return translationsRepository.countTranslationsByProjectId(projectId);
@@ -206,49 +211,41 @@ public class TranslationsService {
     }
 
     public double getAverageTranslationProgressForUser(Long userId) {
-        List<Project> projects = projectRepository.findByOwner_Id(userId);
+        List<ProjectDto> userProjects = projectService.getUserProjects(userId);
 
-        if (projects.isEmpty()) {
-            throw new ResourceNotFoundException("No projects found for user with id " + userId);
+        if (userProjects.isEmpty()) {
+            return 0.0;
         }
 
         double totalProgress = 0.0;
-        int projectCount = 0;
+        int projectCount = userProjects.size();
 
-        for (Project project : projects) {
-            double projectProgress = getOverallTranslationProgressForProject(project.getId().longValue());
-
-            // Sum up the progress
+        for (ProjectDto projectDto : userProjects) {
+            Long projectId = projectDto.getId();
+            double projectProgress = getOverallTranslationProgressForProject(projectId);
             totalProgress += projectProgress;
-            projectCount++;
         }
 
-        //average progress
-        double averageProgress = projectCount > 0 ? totalProgress / projectCount : 0.0;
+        double averageProgress = totalProgress / projectCount;
 
-        return Math.round(averageProgress * 10) / 10.0;
+        return roundToOneDecimalPlace(averageProgress);
     }
-
 
     private double roundToOneDecimalPlace(double value) {
-        BigDecimal bd = new BigDecimal(Double.toString(value));
-        bd = bd.setScale(1, RoundingMode.HALF_UP);
-        return bd.doubleValue();
+        return Math.round(value * 10.0) / 10.0;
     }
 
-    // Total number of translated strings
-//    public double calculateStringProgressForUser(Long userId) {
-//        Long totalTranslatedStrings = translationsRepository.sumTranslatedStringsForUser(userId);
-//
-//        // Default to 0 if no translations are found
-//        if (totalTranslatedStrings == null) {
-//            totalTranslatedStrings = 0L;
-//        }
-//
-//        // Calculate the progress percentage
-//        double progress = ((double) totalTranslatedStrings / 10000) * 100;
-//
-//        // Round to one decimal place
-//        return Math.round(progress * 10.0) / 10.0;
-//    }
+    public Integer getTotalStringNumberByOwnerId(BigInteger ownerId) {
+        Integer totalStringNumber = translationsRepository.sumStringNumbersByOwnerId(ownerId);
+        return totalStringNumber != null ? totalStringNumber : 0;
+    }
+
+    public int calculateStringsTranslationProgress(BigInteger userId) {
+        Integer totalStringNumber = translationsRepository.sumStringNumbersByOwnerId(userId);
+        if (totalStringNumber == null) {
+            totalStringNumber = 0;
+        }
+
+        return Math.min((totalStringNumber * 100) / 10000, 100);
+    }
 }

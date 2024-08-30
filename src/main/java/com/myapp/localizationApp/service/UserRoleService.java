@@ -38,29 +38,11 @@ public List<UserRoleDto> getRolesByUserId(Long userId) {
     return userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
 }
 
-
-//    public List<UserRoleDto> getRolesByUserId(Long userId) {
-//        return userRoleRepository.findByUserId(userId).stream()
-//                .map(this::convertToDto)
-//                .collect(Collectors.toList());
-//    }
-
     public List<UserRoleDto> getRolesByProjectId(Long projectId) {
         List<UserRole> userRoles = userRoleRepository.findByProjectId(projectId);
         return userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
-//    public List<UserRoleDto> getRolesByProjectId(Long projectId) {
-//        return userRoleRepository.findByProjectId(projectId).stream()
-//                .map(this::convertToDto)
-//                .collect(Collectors.toList());
-//    }
-
-//    public List<UserRoleDto> getRolesByOrganizationId(Long organizationId) {
-//        return userRoleRepository.findByOrganizationId(organizationId).stream()
-//                .map(this::converterDto)
-//                .collect(Collectors.toList());
-//    }
 private UserRole convertToEntity(UserRoleDto userRoleDto) {
     UserRole userRole = new UserRole();
     userRole.setUser(userRepository.findById(userRoleDto.getUserId()).orElse(null));
@@ -69,21 +51,6 @@ private UserRole convertToEntity(UserRoleDto userRoleDto) {
     userRole.setRole(roleRepository.findById(userRoleDto.getRoleId()).orElse(null));
     return userRole;
 }
-
-//    private UserRole convertToEntity(UserRoleDto userRoleDto) {
-//        UserRole userRole = new UserRole();
-//        userRole.setId(userRoleDto.getId());
-//        User user = new User();
-//        user.setId(BigInteger.valueOf(userRoleDto.getUserId()));
-//        userRole.setUser(user);
-//        Project project = new Project();
-//        project.setId(BigInteger.valueOf(userRoleDto.getProjectId()));
-//        userRole.setProject(project);
-//        Role role = new Role();
-//        role.setId(userRoleDto.getRoleId());
-//        userRole.setRole(role);
-//        return userRole;
-//    }
 
     private UserRoleDto convertToDto(UserRole userRole) {
         UserRoleDto userRoleDto = new UserRoleDto();

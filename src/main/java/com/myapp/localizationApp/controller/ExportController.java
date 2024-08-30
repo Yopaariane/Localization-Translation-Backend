@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/export")
@@ -30,43 +31,50 @@ public class ExportController {
 
     @GetMapping("/csv")
     public ResponseEntity<String> exportTranslationsToCsv(@RequestParam Long projectId, @RequestParam Long languageId) {
+        try {
+            Map<String, String> exportData = exportService.exportTranslationsByLanguage(projectId, languageId);
 
-        List<ExportDto> exportData = exportService.exportTranslationsByLanguage(projectId, languageId);
-        String projectName = exportService.getProjectName(projectId);
-        String languageName = exportService.getLanguageName(languageId);
+            String languageName = exportService.getLanguageCode(languageId);
 
-        StringWriter writer = new StringWriter();
-        writer.write("Term,Translation\n");
+            StringWriter writer = new StringWriter();
+            writer.write("Term,Translation\n");
 
-        for (ExportDto dto : exportData) {
-            writer.write(String.format("\"%s\",\"%s\"\n",
-                    dto.getTerm(),
-//                    dto.getContext() != null ? dto.getContext() : "",
-                    dto.getTranslation() != null ? dto.getTranslation() : "" ));
+            for (Map.Entry<String, String> entry : exportData.entrySet()) {
+                writer.write(String.format("\"%s\",\"%s\"\n",
+                        escapeCsv(entry.getKey()),
+                        escapeCsv(entry.getValue())));
+            }
+
+            String fileName = languageName + ".csv";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+
+            return new ResponseEntity<>(writer.toString(), headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            throw new ResourceNotFoundException("Downloading Translations CSV Failed, Due to: " + e.getMessage());
         }
+    }
 
-        String fileName = projectName + "-" + languageName + ".csv";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-
-        return new ResponseEntity<>(writer.toString(), headers, HttpStatus.OK);
+    private String escapeCsv(String value) {
+        if (value == null) {
+            return "";
+        }
+        return "\"" + value.replace("\"", "\"\"") + "\"";
     }
 
     @GetMapping("/json")
-    public ResponseEntity<ByteArrayResource> exportTranslationsToJson(@RequestParam Long projectId, @RequestParam Long languageId) throws JsonProcessingException {
+    public ResponseEntity<ByteArrayResource> exportTranslationsToJson(@RequestParam Long projectId, @RequestParam Long languageId) {
         try {
-            List<ExportDto> exportData = exportService.exportTranslationsByLanguage(projectId, languageId);
+            Map<String, String> exportData = exportService.exportTranslationsByLanguage(projectId, languageId);
 
-            String projectName = exportService.getProjectName(projectId);
-            String languageName = exportService.getLanguageName(languageId);
+//            String jsonData = objectMapper.writeValueAsString(exportData);
+            String jsonData = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportData);
 
-            String jsonData = objectMapper.writeValueAsString(exportData);
-
-            // Create the resource
             ByteArrayResource resource = new ByteArrayResource(jsonData.getBytes());
 
-            String fileName = projectName + "-" + languageName + ".json";
+            String fileName = exportService.getLanguageCode(languageId) + ".json";
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
@@ -77,7 +85,8 @@ public class ExportController {
         } catch (JsonProcessingException e) {
             throw new ResourceNotFoundException("Error processing JSON for export");
         } catch (Exception e) {
-            throw new ResourceNotFoundException("Downloading Translations JSON Failed, Due to : " + e.getMessage());
+            throw new ResourceNotFoundException("Downloading Translations JSON Failed, Due to: " + e.getMessage());
         }
     }
+
 }

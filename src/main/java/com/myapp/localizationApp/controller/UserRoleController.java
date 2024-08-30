@@ -38,10 +38,4 @@ public class UserRoleController {
         userRoleService.deleteUserRole(id);
         return ResponseEntity.noContent().build();
     }
-
-//    @GetMapping("/organization/{organizationId}")
-//    public ResponseEntity<List<UserRoleDto>> getRolesByOrganizationId(@PathVariable Long organizationId) {
-//        List<UserRoleDto> userRoles = userRoleService.getRolesByOrganizationId(organizationId);
-//        return ResponseEntity.ok(userRoles);
-//    }
 }

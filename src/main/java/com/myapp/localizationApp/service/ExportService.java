@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,7 +30,7 @@ public class ExportService {
     @Autowired
     private TranslationsRepository translationRepository;
 
-    public List<ExportDto> exportTranslationsByLanguage(Long projectId, Long languageId) {
+    public Map<String, String> exportTranslationsByLanguage(Long projectId, Long languageId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
@@ -37,14 +38,12 @@ public class ExportService {
 
         return translationRepository.findByTerm_ProjectAndLanguage(project, projectLanguage.getLanguage())
                 .stream()
-                .map(translation -> {
-                    ExportDto dto = new ExportDto();
-                    dto.setTerm(translation.getTerm().getTerm());
-                    dto.setTranslation(translation.getTranslation_text());
-                    return dto;
-                })
-                .collect(Collectors.toList());
+                .collect(Collectors.toMap(
+                        translation -> translation.getTerm().getTerm(),
+                        translation -> translation.getTranslation_text() != null ? translation.getTranslation_text() : ""
+                ));
     }
+
 
     public String getProjectName(Long projectId) {
         return projectRepository.findById(projectId)
@@ -52,9 +51,9 @@ public class ExportService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
     }
 
-    public String getLanguageName(Long languageId) {
+    public String getLanguageCode(Long languageId) {
         return languageRepository.findById(languageId)
-                .map(Language::getName)
+                .map(Language::getCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Language not found"));
     }
 }

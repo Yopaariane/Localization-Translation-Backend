@@ -1,5 +1,7 @@
 package com.myapp.localizationApp.controller;
 
+import com.myapp.localizationApp.dto.ProjectDto;
+import com.myapp.localizationApp.dto.UserRoleDto;
 import com.myapp.localizationApp.service.UserService;
 import com.myapp.localizationApp.dto.Response;
 import com.myapp.localizationApp.dto.UserDto;
@@ -49,45 +51,41 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-//    @PostMapping("/login")
-//    public ResponseEntity<?> login(@RequestBody User user) {
-//        Optional<User> foundUser = userService.findByUsername(user.getUsername());
-//        if (foundUser.isPresent() && userService.validatePassword(user.getPasswordHash(), foundUser.get().getPasswordHash())) {
-//            Response response = new Response();
-//            response.setStatus("OK");
-//            response.setData("Login successful");
-//
-//            return ResponseEntity.ok(response);
-//        }
-//        Response response = new Response();
-//        response.setStatus("NOTOK");
-//        response.setData("Login failed");
-//        return ResponseEntity.status(401).body(response);
-//    }
-@PostMapping("/login")
-public ResponseEntity<Response> login(@RequestBody UserDto userDto) {
-    Optional<User> foundUser = userService.findByUsername(userDto.getName());
+    @PostMapping("/login")
+    public ResponseEntity<Response> login(@RequestBody UserDto userDto) {
+        Optional<User> foundUser = userService.findByUsername(userDto.getName());
 
-    if (foundUser.isPresent() && userService.validatePassword(userDto.getPassword(), foundUser.get().getPasswordHash())) {
-        User user = foundUser.get();
-        Response response = new Response(
-                "OK",
-                "Login successful",
-                user.getId().longValue(),
-                user.getUsername(),
-                user.getEmail()
-        );
-        return ResponseEntity.ok(response);
-    } else {
-        Response response = new Response(
-                "NOTOK",
-                "Login failed",
-                null,
-                null,
-                null
-        );
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        if (foundUser.isPresent() && userService.validatePassword(userDto.getPassword(), foundUser.get().getPasswordHash())) {
+            User user = foundUser.get();
+            Response response = new Response(
+                    "OK",
+                    "Login successful",
+                    user.getId().longValue(),
+                    user.getUsername(),
+                    user.getEmail()
+            );
+            return ResponseEntity.ok(response);
+        } else {
+            Response response = new Response(
+                    "NOTOK",
+                    "Login failed",
+                    null,
+                    null,
+                    null
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
     }
-}
 
+    @GetMapping("{id}")
+    public  ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
+        Optional<UserDto> userDto = userService.getUserById(id);
+        return  userDto.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<UserDto> getUserByEmail(@PathVariable String email) {
+        UserDto userDto = userService.getUserByEmail(email);
+        return ResponseEntity.ok(userDto);
+    }
 }

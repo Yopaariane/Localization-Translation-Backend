@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigInteger;
 import java.util.List;
 
 @RestController
@@ -76,9 +77,15 @@ public class TranslationsController {
         return ResponseEntity.ok(averageProgress);
     }
 
-//    @GetMapping("/string-progress/user/{userId}")
-//    public ResponseEntity<Double> getStringProgressForUser(@PathVariable Long userId) {
-//        double progress = translationsService.calculateStringProgressForUser(userId);
-//        return ResponseEntity.ok(progress);
-//    }
+    @GetMapping("/total-strings/{ownerId}")
+    public ResponseEntity<Integer> getTotalStringNumber(@PathVariable BigInteger ownerId) {
+        Integer totalStringNumber = translationsService.getTotalStringNumberByOwnerId(ownerId);
+        return ResponseEntity.ok(totalStringNumber);
+    }
+
+    @GetMapping("/string-progress/users/{userId}")
+    public ResponseEntity<Integer> getStringsTranslationProgress(@PathVariable BigInteger userId) {
+        int progress = translationsService.calculateStringsTranslationProgress(userId);
+        return ResponseEntity.ok(progress);
+    }
 }

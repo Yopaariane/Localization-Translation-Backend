@@ -1,6 +1,7 @@
 package com.myapp.localizationApp.controller;
 
 import com.myapp.localizationApp.dto.LanguageDto;
+import com.myapp.localizationApp.entity.Language;
 import com.myapp.localizationApp.service.LanguageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -27,4 +28,10 @@ public class LanguageController {
         return languageDto.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+
+//    @GetMapping("/code/{code}")
+//    public  ResponseEntity<Language> getLanguageByCode(@PathVariable String code) {
+//        Language language = languageService.getLanguageByCode(code);
+//        return  ResponseEntity.ok(language);
+//    }
 }

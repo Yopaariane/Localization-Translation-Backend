@@ -5,6 +5,7 @@ import com.myapp.localizationApp.dto.ProjectDto;
 import com.myapp.localizationApp.entity.Language;
 import com.myapp.localizationApp.repository.LanguageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,16 +16,22 @@ public class LanguageService {
     @Autowired
     private LanguageRepository languageRepository;
 
+//    @Cacheable(value = "allLanguages")
     public List<LanguageDto> getAllLanguages() {
         return languageRepository.findAll().stream()
                 .map(this::toDto)
                 .toList();
     }
 
+//    @Cacheable(value = "languageById", key = "#id")
     public Optional<LanguageDto> getLanguageById(Long id) {
         return languageRepository.findById(id)
                 .map(this::toDto);
     }
+
+//    public  Language getLanguageByCode(String code) {
+//        return  languageRepository.findByCode(code);
+//    }
 
 //    public LanguageDto getDefaultLanguage() {
 //        Language defaultLanguage = languageRepository.findByIsDefaultTrue();

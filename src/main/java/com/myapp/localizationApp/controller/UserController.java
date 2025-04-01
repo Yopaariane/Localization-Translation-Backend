@@ -1,10 +1,7 @@
 package com.myapp.localizationApp.controller;
 
-import com.myapp.localizationApp.dto.ProjectDto;
-import com.myapp.localizationApp.dto.UserRoleDto;
+import com.myapp.localizationApp.dto.*;
 import com.myapp.localizationApp.service.UserService;
-import com.myapp.localizationApp.dto.Response;
-import com.myapp.localizationApp.dto.UserDto;
 import com.myapp.localizationApp.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -87,5 +84,17 @@ public class UserController {
     public ResponseEntity<UserDto> getUserByEmail(@PathVariable String email) {
         UserDto userDto = userService.getUserByEmail(email);
         return ResponseEntity.ok(userDto);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @RequestBody UserDto userDto) {
+        UserDto updatedUser = userService.updateUser(id, userDto);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

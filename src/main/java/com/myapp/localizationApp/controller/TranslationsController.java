@@ -77,6 +77,12 @@ public class TranslationsController {
         return ResponseEntity.ok(averageProgress);
     }
 
+    @GetMapping("/translation-progress/organization/{organizationId}")
+    public ResponseEntity<Double> getAverageTranslationProgressForOrganization (@PathVariable Long organizationId) {
+        double organizationAverageProgress = translationsService.getAverageTranslationProgressForOrganization(organizationId);
+        return ResponseEntity.ok(organizationAverageProgress);
+    }
+
     @GetMapping("/total-strings/{ownerId}")
     public ResponseEntity<Integer> getTotalStringNumber(@PathVariable BigInteger ownerId) {
         Integer totalStringNumber = translationsService.getTotalStringNumberByOwnerId(ownerId);

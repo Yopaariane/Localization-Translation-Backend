@@ -10,6 +10,9 @@ import com.myapp.localizationApp.repository.ProjectLanguageRepository;
 import com.myapp.localizationApp.repository.ProjectRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
@@ -19,33 +22,39 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProjectLanguageService {
-    @Autowired
-    private ProjectLanguageRepository projectLanguageRepository;
 
-    @Autowired
-    private ProjectRepository projectRepository;
+    private  final ProjectLanguageRepository projectLanguageRepository;
+    private  final  ProjectRepository projectRepository;
+    private final LanguageRepository languageRepository;
+    private final ModelMapper modelMapper;
 
-    @Autowired
-    private LanguageRepository languageRepository;
+    public ProjectLanguageService(ProjectLanguageRepository projectLanguageRepository, ProjectRepository projectRepository, LanguageRepository languageRepository, ModelMapper modelMapper){
+        this.projectLanguageRepository = projectLanguageRepository;
+        this.projectRepository = projectRepository;
+        this.languageRepository = languageRepository;
+        this.modelMapper = modelMapper;
+    }
 
-    @Autowired
-    private ModelMapper modelMapper;
-
+    @CachePut(value = "projectLanguageById", key = "#result.id")
+    @CacheEvict(value = {"languageByProjectId", "projectLanByLanguageAndProject", "projectByUser"}, key = "#projectLanguageDto.projectId")
     public ProjectLanguageDto assignLanguageToProject(ProjectLanguageDto projectLanguageDto){
         ProjectLanguage projectLanguage = convertToEntity(projectLanguageDto);
         ProjectLanguage saveProjectLanguage = projectLanguageRepository.save(projectLanguage);
         return convertToDto(saveProjectLanguage);
     }
 
+    @Cacheable(value = "languageByProjectId", key = "#projectId")
     public List<ProjectLanguageDto> getLanguageByProjectId(Long projectId){
         List<ProjectLanguage> projectLanguages = projectLanguageRepository.findByProjectId(BigInteger.valueOf(projectId));
         return projectLanguages.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
+    @Cacheable(value = "projectLanguageById", key = "#id")
     public Optional<ProjectLanguageDto> getProjectLanguageById(Long id){
         return  projectLanguageRepository.findById(id).map(this::convertToDto);
     }
 
+    @CacheEvict(value = {"projectLanguageById", "languageByProjectId", "projectLanByLanguageAndProject", "projectByUser"}, allEntries = true)
     public void deleteProjectLanguage( Long id){
         projectLanguageRepository.deleteById(id);
     }
@@ -69,31 +78,11 @@ public class ProjectLanguageService {
         return projectLanguageRepository.existsByProjectIdAndLanguageId(projectId, languageId);
     }
 
+    @Cacheable(value = "projectLanByLanguageAndProject", key = "#languageId + '-' + #projectId", unless = "#result == null")
     public ProjectLanguageDto getByLanguageIdAndProjectId(Long languageId, Long projectId) {
         ProjectLanguage projectLanguage = projectLanguageRepository
                 .findByLanguageIdAndProjectId(languageId, projectId);
 
         return modelMapper.map(projectLanguage, ProjectLanguageDto.class);
     }
-
-//    public ProjectLanguageDto createProjectLanguage(Long projectId, Long languageId) {
-//        if (existsByProjectIdAndLanguageId(projectId, languageId)) {
-//            Project project = projectRepository.findById(projectId)
-//                    .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
-//
-//            Language language = languageRepository.findById(languageId)
-//                    .orElseThrow(() -> new ResourceNotFoundException("Language not found with id: " + languageId));
-//
-//            ProjectLanguage projectLanguage = new ProjectLanguage();
-//            projectLanguage.setProject(project);
-//            projectLanguage.setLanguage(language);
-//
-//            ProjectLanguage savedProjectLanguage = projectLanguageRepository.save(projectLanguage);
-//
-//            return convertToDto(savedProjectLanguage);
-//        } else {
-//            throw new ResourceNotFoundException("ProjectLanguage already exists for projectId: " + projectId + " and languageId: " + languageId);
-//        }
-//    }
-
 }

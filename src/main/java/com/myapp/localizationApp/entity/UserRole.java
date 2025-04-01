@@ -21,10 +21,6 @@ public class UserRole {
     @JoinColumn(name = "project_id")
     private Project project;
 
-//    @ManyToOne
-//    @JoinColumn(name = "organization_id")
-//    private Organization organization;
-
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;

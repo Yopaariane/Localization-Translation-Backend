@@ -33,24 +33,34 @@ public class UserRoleService {
         return convertToDto(savedUserRole);
     }
 
-public List<UserRoleDto> getRolesByUserId(Long userId) {
-    List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
-    return userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
-}
-
-    public List<UserRoleDto> getRolesByProjectId(Long projectId) {
-        List<UserRole> userRoles = userRoleRepository.findByProjectId(projectId);
+    public List<UserRoleDto> getRolesByUserId(Long userId) {
+        List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
         return userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
-private UserRole convertToEntity(UserRoleDto userRoleDto) {
-    UserRole userRole = new UserRole();
-    userRole.setUser(userRepository.findById(userRoleDto.getUserId()).orElse(null));
-    userRole.setProject(projectRepository.findById(userRoleDto.getProjectId()).orElse(null));
-    //userRole.setOrganization(organizationRepository.findById(userRoleDto.getOrganizationId()).orElse(null));
-    userRole.setRole(roleRepository.findById(userRoleDto.getRoleId()).orElse(null));
-    return userRole;
-}
+    public  List<UserRoleDto> getByUserIdAndRoleId(Long userId, Long roleId) {
+            List<UserRole> userRoles = userRoleRepository.findByUserIdAndRoleId(userId, roleId);
+            return userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
+    }
+
+    public List<UserRoleDto> getByUserIdAndProjectId(Long userId, Long projectId) {
+        List<UserRole> userRoles = userRoleRepository.findByUserIdAndProjectId(userId, projectId);
+        return  userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
+    }
+
+        public List<UserRoleDto> getRolesByProjectId(Long projectId) {
+            List<UserRole> userRoles = userRoleRepository.findByProjectId(projectId);
+            return userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
+        }
+
+    private UserRole convertToEntity(UserRoleDto userRoleDto) {
+        UserRole userRole = new UserRole();
+        userRole.setUser(userRepository.findById(userRoleDto.getUserId()).orElse(null));
+        userRole.setProject(projectRepository.findById(userRoleDto.getProjectId()).orElse(null));
+        //userRole.setOrganization(organizationRepository.findById(userRoleDto.getOrganizationId()).orElse(null));
+        userRole.setRole(roleRepository.findById(userRoleDto.getRoleId()).orElse(null));
+        return userRole;
+    }
 
     private UserRoleDto convertToDto(UserRole userRole) {
         UserRoleDto userRoleDto = new UserRoleDto();

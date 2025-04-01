@@ -27,6 +27,18 @@ public class UserRoleController {
         return ResponseEntity.ok(userRoles);
     }
 
+    @GetMapping("/user/{userId}/role/{roleId}")
+    public  ResponseEntity<List<UserRoleDto>> getByUserIdAndRoleId(@PathVariable Long userId, @PathVariable Long roleId) {
+        List<UserRoleDto> userRoleDto = userRoleService.getByUserIdAndRoleId(userId, roleId);
+        return ResponseEntity.ok(userRoleDto);
+    }
+
+    @GetMapping("/user/{userId}/project/{projectId}")
+    public  ResponseEntity<List<UserRoleDto>> getByUserIdAndProjectId(@PathVariable Long userId, @PathVariable Long projectId) {
+        List<UserRoleDto> userRoleDto = userRoleService.getByUserIdAndProjectId(userId, projectId);
+        return ResponseEntity.ok(userRoleDto);
+    }
+
     @GetMapping("/project/{projectId}")
     public ResponseEntity<List<UserRoleDto>> getRolesByProjectId(@PathVariable Long projectId) {
         List<UserRoleDto> userRoles = userRoleService.getRolesByProjectId(projectId);

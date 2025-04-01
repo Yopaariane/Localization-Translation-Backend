@@ -11,24 +11,33 @@ import com.myapp.localizationApp.repository.TermsRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class TermsService {
-    @Autowired
-    private TermsRepository termsRepository;
 
-    @Autowired
-    private ProjectRepository projectRepository;
+    private  final TermsRepository termsRepository;
+    private  final ProjectRepository projectRepository;
+    private  final  ModelMapper modelMapper;
+    private final StringRedisTemplate redisTemplate;
 
-    @Autowired
-    private ModelMapper modelMapper;
 
-    
+    public TermsService(TermsRepository termsRepository, ProjectRepository projectRepository, ModelMapper modelMapper, StringRedisTemplate redisTemplate){
+        this.redisTemplate = redisTemplate;
+        this.modelMapper = modelMapper;
+        this.termsRepository = termsRepository;
+        this.projectRepository = projectRepository;
+    }
+
+    @CacheEvict(value = {"totalStringNumber", "termsByProject", "totalStrings"}, key = "#termsDto.projectId", beforeInvocation = true)
     public TermsDto createTerm(TermsDto termsDto) {
         Terms term = modelMapper.map(termsDto, Terms.class);
 
@@ -47,7 +56,7 @@ public class TermsService {
         return modelMapper.map(savedTerm, TermsDto.class);
     }
 
-    
+    @CachePut(value = "terms", key = "#termsDto.id")
     public TermsDto updateTerm(Long id, TermsDto termsDto) {
         Terms term = termsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Term not found with id: " + id));
@@ -67,23 +76,26 @@ public class TermsService {
         return modelMapper.map(updatedTerm, TermsDto.class);
     }
 
+    @Cacheable(value = "termsByTermAndProject", unless = "#result == null")
     public TermsDto findByTermAndProjectId(String term, Long projectId) {
         Terms termEntity = termsRepository.findByTermAndProjectId(term, projectId);
         return termEntity == null ? null : modelMapper.map(termEntity, TermsDto.class);
     }
 
 
-
+    @CacheEvict(value = {"totalStringNumber", "terms", "termsByProject", "totalStrings"}, allEntries = true)
     public void deleteTerm(Long id) {
         termsRepository.deleteById(id);
     }
 
+    @Cacheable(value =  "terms", key = "#id")
     public TermsDto findById(Long id) {
         Terms term = termsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Term not found with id: " + id));
         return modelMapper.map(term, TermsDto.class);
     }
 
+    @Cacheable(value =  "termsByProject", key = "#p0")
     public List<TermsDto> findTermsByProjectId(Long projectId) {
         List<Terms> termsList = termsRepository.findByProjectId(projectId);
         modelMapper.typeMap(Terms.class, TermsDto.class).addMappings(mapper ->{
@@ -95,10 +107,21 @@ public class TermsService {
     }
 
     public int getTotalStringNumberByProjectId(Long projectId) {
-        List<Terms> termsList = termsRepository.findByProjectId(projectId);
-        return termsList.stream()
+        String cacheKey = "totalStrings:" + projectId;
+        String cachedValue = redisTemplate.opsForValue().get(cacheKey);
+
+        if (cachedValue != null) {
+            return Integer.parseInt(cachedValue);
+        }
+
+        // Fetch from DB if not cached
+        int total = termsRepository.findByProjectId(projectId)
+                .stream()
                 .mapToInt(Terms::getStringNumber)
                 .sum();
+
+        redisTemplate.opsForValue().set(cacheKey, String.valueOf(total), 10, TimeUnit.MINUTES);
+        return total;
     }
     
     public long countTermsByProjectId(Long projectId) {

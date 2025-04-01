@@ -1,5 +1,6 @@
 package com.myapp.localizationApp.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,6 +16,10 @@ public class TranslationsDto {
     private Long termId;
     private Long languageId;
     private BigInteger creatorId;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp createdAt;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp updatedAt;
 }

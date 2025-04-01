@@ -7,6 +7,11 @@ import com.myapp.localizationApp.entity.*;
 import com.myapp.localizationApp.repository.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
@@ -15,27 +20,33 @@ import java.util.stream.Collectors;
 
 @Service
 public class TranslationsService {
-    @Autowired
-    private ModelMapper modelMapper;
 
-    @Autowired
-    private TranslationsRepository translationsRepository;
+    private final ModelMapper modelMapper;
+    private final  TranslationsRepository translationsRepository;
+    private  final  TermsRepository termsRepository;
+    private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
+    private final ProjectLanguageRepository projectLanguageRepository;
+    private  final LanguageRepository languageRepository;
+    private final UserRepository userRepository;
+    private final OrganizationService organizationService;
 
-    @Autowired
-    private TermsRepository termsRepository;
-    @Autowired
-    private ProjectRepository projectRepository;
-    @Autowired
-    private ProjectService projectService;
-    @Autowired
-    private ProjectLanguageRepository projectLanguageRepository;
+    public TranslationsService(ModelMapper modelMapper, TranslationsRepository translationsRepository, TermsRepository termsRepository, ProjectRepository projectRepository, ProjectService projectService, ProjectLanguageRepository projectLanguageRepository, LanguageRepository languageRepository, UserRepository userRepository, OrganizationService organizationService) {
+        this.modelMapper = modelMapper;
+        this.translationsRepository = translationsRepository;
+        this.termsRepository = termsRepository;
+        this.projectRepository = projectRepository;
+        this.projectService = projectService;
+        this.projectLanguageRepository = projectLanguageRepository;
+        this.languageRepository = languageRepository;
+        this.userRepository = userRepository;
+        this.organizationService = organizationService;
+    }
 
-    @Autowired
-    private LanguageRepository languageRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
+    @CacheEvict(value = {"translationByTerm", "translationsByLanguage",  "averageTranslationForUser",
+            "overallTranslationForProject", "translationByTermLanguageAndCreator", "stringTranslationProgress",
+            "translationProgressFromTerm", "translationProgressForLanguage"},
+            key = "#translationsDto.termId")
     public TranslationsDto createTranslation(TranslationsDto translationsDto) {
         // Manually map simple fields
         Translations translations = new Translations();
@@ -70,6 +81,10 @@ public class TranslationsService {
         return modelMapper.map(savedTranslation, TranslationsDto.class);
     }
 
+    @CachePut(value = "translationByTerm", key = "#id")
+    @CacheEvict(value = {"translationsByLanguage", "translationProgressFromTerm",  "averageTranslationForUser", "stringTranslationProgress",
+            "overallTranslationForProject", "translationByTermLanguageAndCreator", "translationProgressForLanguage"},
+            key = "#translationsDto.termId")
     public TranslationsDto updateTranslation(Long id, TranslationsDto translationsDto) {
         Translations existingTranslation = translationsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Translation not found with id: " + id));
@@ -108,6 +123,10 @@ public class TranslationsService {
         return modelMapper.map(updatedTranslation, TranslationsDto.class);
     }
 
+    @CacheEvict(value = {"translationByTerm", "translationsByLanguage", "averageTranslationForUser",
+            "overallTranslationForProject", "translationByTermLanguageAndCreator",
+            "translationProgressFromTerm", "stringTranslationProgress", "translationProgressForLanguage"},
+            key = "#id")
     public void deleteTranslation(Long id) {
         Translations existingTranslation = translationsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Translation not found with id: " + id));
@@ -115,6 +134,7 @@ public class TranslationsService {
         translationsRepository.delete(existingTranslation);
     }
 
+    @Cacheable(value = "translationByTerm", key = "#termId")
     public List<TranslationsDto> getTranslationsByTermId(Long termId) {
         List<Translations> translations = translationsRepository.findTranslationsByTermId(termId);
         modelMapper.typeMap(Translations.class, TranslationsDto.class).addMappings(mapper -> {
@@ -127,6 +147,7 @@ public class TranslationsService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "translationsByLanguage", key = "#languageId")
     public List<TranslationsDto> getTranslationsByLanguageId(Long languageId) {
         List<Translations> translations = translationsRepository.findTranslationsByLanguageId(languageId);
         modelMapper.typeMap(Translations.class, TranslationsDto.class).addMappings(mapper -> {
@@ -139,6 +160,7 @@ public class TranslationsService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "translationByTermLanguageAndCreator", key = "#termId + '-' + #languageId + '-' + #creatorId", unless="#result == null")
     public TranslationsDto findByTermIdAndLanguageIdAndCreatorId(Long termId, Long languageId, BigInteger creatorId) {
         Translations translationEntity = translationsRepository.findByTermIdAndLanguageIdAndCreatorId(termId, languageId, creatorId);
         return translationEntity == null ? null : modelMapper.map(translationEntity, TranslationsDto.class);
@@ -149,6 +171,7 @@ public class TranslationsService {
         return translationsRepository.countTranslationsByProjectId(projectId);
     }
 
+    @Cacheable(value = "translationProgressFromTerm", key = "#termId")
     public double getTranslationProgressForTerm(Long termId) {
         Terms term = termsRepository.findById(termId)
                 .orElseThrow(() -> new ResourceNotFoundException("Term not found"));
@@ -165,6 +188,7 @@ public class TranslationsService {
         return roundToOneDecimalPlace(progress);
     }
 
+    @Cacheable(value = "translationProgressForLanguage", key = "#languageId + '-' + #projectId")
     public double getTranslationProgressForLanguage(Long languageId, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id " + projectId));
@@ -186,6 +210,7 @@ public class TranslationsService {
         return roundToOneDecimalPlace(progress);
     }
 
+    @Cacheable(value = "overallTranslationForProject", key = "#projectId")
     public double getOverallTranslationProgressForProject(Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id " + projectId));
@@ -210,36 +235,43 @@ public class TranslationsService {
         return roundToOneDecimalPlace(overallProgress);
     }
 
+    @Cacheable(value = "averageTranslationForUser", key = "#userId")
     public double getAverageTranslationProgressForUser(Long userId) {
         List<ProjectDto> userProjects = projectService.getUserProjects(userId);
+        return calculateAverageTranslationProgress(userProjects);
+    }
 
-        if (userProjects.isEmpty()) {
+    // @Cacheable(value = "getAverageTranslationProgressForOrganization", key = "#organizationId")
+    public double getAverageTranslationProgressForOrganization(Long organizationId) {
+        List<ProjectDto> organizationProjects = organizationService.getProjectsByOrganizationId(organizationId);
+        return calculateAverageTranslationProgress(organizationProjects);
+    }
+
+    private double calculateAverageTranslationProgress(List<ProjectDto> projects) {
+        if (projects.isEmpty()) {
             return 0.0;
         }
 
-        double totalProgress = 0.0;
-        int projectCount = userProjects.size();
+        double totalProgress = projects.stream()
+                .mapToDouble(project -> getOverallTranslationProgressForProject(project.getId()))
+                .sum();
 
-        for (ProjectDto projectDto : userProjects) {
-            Long projectId = projectDto.getId();
-            double projectProgress = getOverallTranslationProgressForProject(projectId);
-            totalProgress += projectProgress;
-        }
-
-        double averageProgress = totalProgress / projectCount;
-
+        double averageProgress = totalProgress / projects.size();
         return roundToOneDecimalPlace(averageProgress);
     }
+
 
     private double roundToOneDecimalPlace(double value) {
         return Math.round(value * 10.0) / 10.0;
     }
 
+    @Cacheable(value = "totalStringNumber", key = "#ownerId")
     public Integer getTotalStringNumberByOwnerId(BigInteger ownerId) {
         Integer totalStringNumber = translationsRepository.sumStringNumbersByOwnerId(ownerId);
         return totalStringNumber != null ? totalStringNumber : 0;
     }
 
+    @Cacheable(value = "stringTranslationProgress", key = "#userId")
     public int calculateStringsTranslationProgress(BigInteger userId) {
         Integer totalStringNumber = translationsRepository.sumStringNumbersByOwnerId(userId);
         if (totalStringNumber == null) {

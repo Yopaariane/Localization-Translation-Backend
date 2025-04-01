@@ -16,4 +16,7 @@ public class ProjectDto {
     private Timestamp createAt;
     private Long ownerId;
     private List<LanguageDto> languages;
+    private Long organizationId;
+    private Long defaultLangId;
+    private Long roleId;
 }

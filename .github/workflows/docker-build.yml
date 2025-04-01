@@ -12,6 +12,11 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Set up Maven
+        uses: s4u/setup-maven-action@v1
+        with:
+          maven-version: 3.9.6
+
       - name: Build JAR file
         run: mvn clean package -DskipTests
 
@@ -28,4 +33,3 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ariane965/translation_backend:latest
-

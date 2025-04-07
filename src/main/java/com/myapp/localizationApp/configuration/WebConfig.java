@@ -17,5 +17,6 @@ public class WebConfig implements WebMvcConfigurer {
                         .allowedHeaders("*")
                         .exposedHeaders(HttpHeaders.CONTENT_DISPOSITION)
                         .allowCredentials(true);
+
     }
 }

@@ -19,6 +19,11 @@ public class UserController {
     @Autowired
     UserService userService;
 
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("Backend is healthy");
+    }
+
     @GetMapping
     public List<User> getAllUsers() {
         return userService.getAllUsers();

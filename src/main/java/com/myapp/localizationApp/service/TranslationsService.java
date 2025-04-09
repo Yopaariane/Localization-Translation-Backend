@@ -46,7 +46,7 @@ public class TranslationsService {
     @CacheEvict(value = {"translationByTerm", "translationsByLanguage",  "averageTranslationForUser",
             "overallTranslationForProject", "translationByTermLanguageAndCreator", "stringTranslationProgress",
             "translationProgressFromTerm", "translationProgressForLanguage"},
-            key = "#translationsDto.termId")
+            allEntries = true)
     public TranslationsDto createTranslation(TranslationsDto translationsDto) {
         // Manually map simple fields
         Translations translations = new Translations();
@@ -84,7 +84,7 @@ public class TranslationsService {
     @CachePut(value = "translationByTerm", key = "#id")
     @CacheEvict(value = {"translationsByLanguage", "translationProgressFromTerm",  "averageTranslationForUser", "stringTranslationProgress",
             "overallTranslationForProject", "translationByTermLanguageAndCreator", "translationProgressForLanguage"},
-            key = "#translationsDto.termId")
+            allEntries = true)
     public TranslationsDto updateTranslation(Long id, TranslationsDto translationsDto) {
         Translations existingTranslation = translationsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Translation not found with id: " + id));
@@ -126,7 +126,7 @@ public class TranslationsService {
     @CacheEvict(value = {"translationByTerm", "translationsByLanguage", "averageTranslationForUser",
             "overallTranslationForProject", "translationByTermLanguageAndCreator",
             "translationProgressFromTerm", "stringTranslationProgress", "translationProgressForLanguage"},
-            key = "#id")
+            allEntries = true)
     public void deleteTranslation(Long id) {
         Translations existingTranslation = translationsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Translation not found with id: " + id));

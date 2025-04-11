@@ -42,4 +42,8 @@ public class OrganizationController {
         return ResponseEntity.ok(organizationService.getOrganizationsByUserId(userId));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<OrganizationDto> getOrganizationsById(@PathVariable Long id) {
+        return ResponseEntity.ok(organizationService.getOrganizationById(id));
+    }
 }

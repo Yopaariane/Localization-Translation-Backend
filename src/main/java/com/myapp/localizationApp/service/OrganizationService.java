@@ -1,10 +1,7 @@
 package com.myapp.localizationApp.service;
 
 import com.myapp.localizationApp.configuration.ResourceNotFoundException;
-import com.myapp.localizationApp.dto.LanguageDto;
-import com.myapp.localizationApp.dto.OrganizationDto;
-import com.myapp.localizationApp.dto.ProjectDto;
-import com.myapp.localizationApp.dto.ProjectLanguageDto;
+import com.myapp.localizationApp.dto.*;
 import com.myapp.localizationApp.entity.*;
 import com.myapp.localizationApp.repository.*;
 import jakarta.transaction.Transactional;
@@ -13,6 +10,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,7 +40,7 @@ public class OrganizationService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + organizationDto.getUserId()));
         organization.setUser(user);
 
-        Language language = languageRepository.findById(organizationDto.getDefaultLanguageId())
+        Language language = languageRepository.findById(organizationDto.getDefaultLangId())
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid Language ID"));
         organization.setDefaultLanguage(language);
 
@@ -114,11 +112,17 @@ public class OrganizationService {
         ModelMapper modelMapper = new ModelMapper();
         modelMapper.typeMap(Organization.class, OrganizationDto.class).addMappings(mapper -> {
             mapper.map(Organization::getCreatedAt, OrganizationDto::setCreateAt);
-            mapper.map(org -> org.getDefaultLanguage().getId(), OrganizationDto::setDefaultLanguageId);
+            mapper.map(org -> org.getDefaultLanguage().getId(), OrganizationDto::setDefaultLangId);
         });
 
         return organizations.stream()
                 .map(org -> modelMapper.map(org, OrganizationDto.class))
                 .collect(Collectors.toList());
+    }
+
+    public OrganizationDto getOrganizationById(Long id) {
+        Organization organization = organizationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found with id: " + id));
+        return modelMapper.map(organization, OrganizationDto.class);
     }
 }

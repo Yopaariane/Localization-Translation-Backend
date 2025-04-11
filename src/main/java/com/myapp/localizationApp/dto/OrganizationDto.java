@@ -12,5 +12,5 @@ public class OrganizationDto {
     private String name;
     private Timestamp createAt;
     private Long userId;
-    private Long defaultLanguageId;
+    private Long defaultLangId;
 }

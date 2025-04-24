@@ -10,7 +10,7 @@ public class JacksonConfig {
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule()); // Enables support for LocalDateTime
+        objectMapper.registerModule(new JavaTimeModule());
         return objectMapper;
     }
 }

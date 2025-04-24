@@ -1,12 +1,14 @@
 package com.myapp.localizationApp.controller;
 
 import com.myapp.localizationApp.dto.TermsDto;
+import com.myapp.localizationApp.service.PermissionService;
 import com.myapp.localizationApp.service.TermsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
@@ -14,6 +16,9 @@ import java.util.List;
 public class TermsController {
     @Autowired
     private TermsService termsService;
+
+    @Autowired
+    private PermissionService permissionService;
 
     @PostMapping
     public ResponseEntity<TermsDto> createTerm(@RequestBody TermsDto termsDto) {
@@ -27,9 +32,9 @@ public class TermsController {
         return ResponseEntity.ok(updatedTerm);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTerm(@PathVariable Long id) {
-        termsService.deleteTerm(id);
+    @DeleteMapping("/{id}/user/{userId}")
+    public ResponseEntity<Void> deleteTerm(@PathVariable Long id, @PathVariable Long userId) throws AccessDeniedException {
+        termsService.deleteTerm(id, userId);
         return ResponseEntity.noContent().build();
     }
 

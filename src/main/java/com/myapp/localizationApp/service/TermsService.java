@@ -17,6 +17,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -28,13 +29,16 @@ public class TermsService {
     private  final ProjectRepository projectRepository;
     private  final  ModelMapper modelMapper;
     private final StringRedisTemplate redisTemplate;
+    private final PermissionService permissionService;
 
 
-    public TermsService(TermsRepository termsRepository, ProjectRepository projectRepository, ModelMapper modelMapper, StringRedisTemplate redisTemplate){
+    public TermsService(TermsRepository termsRepository, ProjectRepository projectRepository,
+                        ModelMapper modelMapper, StringRedisTemplate redisTemplate, PermissionService permissionService){
         this.redisTemplate = redisTemplate;
         this.modelMapper = modelMapper;
         this.termsRepository = termsRepository;
         this.projectRepository = projectRepository;
+        this.permissionService = permissionService;
     }
 
     @CacheEvict(value = {"totalStringNumber", "termsByProject", "totalStrings"}, key = "#termsDto.projectId", beforeInvocation = true)
@@ -84,9 +88,14 @@ public class TermsService {
 
 
     @CacheEvict(value = {"totalStringNumber", "terms", "termsByProject", "totalStrings"}, allEntries = true)
-    public void deleteTerm(Long id) {
+    public void deleteTerm(Long id, Long userId) throws AccessDeniedException {
+        Long projectId = termsRepository.findProjectIdByTermId(id);
+        if (!permissionService.hasPermission(userId, projectId, "add, modify and delete terms")) {
+            throw new AccessDeniedException("You don't have permission to delete this term.");
+        }
         termsRepository.deleteById(id);
     }
+
 
     @Cacheable(value =  "terms", key = "#id")
     public TermsDto findById(Long id) {

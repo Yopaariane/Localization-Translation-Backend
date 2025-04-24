@@ -1,13 +1,19 @@
 package com.myapp.localizationApp.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.myapp.localizationApp.dto.LocalizedImageDto;
 import com.myapp.localizationApp.service.LocalizedImageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -27,12 +33,19 @@ public class LocalizedImageController {
         return ResponseEntity.ok(imageService.saveImage(file, languageId, projectId, imageKey));
     }
 
-    @GetMapping("/export")
-    public ResponseEntity<Map<String, String>> exportImages(
-            @RequestParam Long projectId,
-            @RequestParam Long languageId
-    ) {
-        return ResponseEntity.ok(imageService.exportImages(projectId, languageId));
+    @GetMapping("/export/project/{projectId}/language/{languageId}")
+    public ResponseEntity<Resource> exportImagesAsFile(
+            @PathVariable Long projectId,
+            @PathVariable Long languageId
+    ) throws IOException {
+        Map<String, String> export = imageService.exportImages(projectId, languageId);
+        String jsonContent = new ObjectMapper().writeValueAsString(export);
+        ByteArrayResource resource = new ByteArrayResource(jsonContent.getBytes(StandardCharsets.UTF_8));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=image-export-" + projectId + "-" + languageId + ".json")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 
     @GetMapping("/{id}")

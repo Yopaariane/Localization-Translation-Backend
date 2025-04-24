@@ -28,10 +28,4 @@ public class LanguageController {
         return languageDto.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
-//    @GetMapping("/code/{code}")
-//    public  ResponseEntity<Language> getLanguageByCode(@PathVariable String code) {
-//        Language language = languageService.getLanguageByCode(code);
-//        return  ResponseEntity.ok(language);
-//    }
 }

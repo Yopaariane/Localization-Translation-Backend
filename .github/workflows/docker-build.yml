@@ -48,4 +48,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ariane965/translation_backend:trans_$GITHUB_SHA
+          tags: ariane965/translation_backend:trans_latest

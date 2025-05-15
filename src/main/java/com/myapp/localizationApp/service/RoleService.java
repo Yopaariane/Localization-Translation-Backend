@@ -9,6 +9,7 @@ import com.myapp.localizationApp.entity.Terms;
 import com.myapp.localizationApp.repository.RoleRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,11 +22,13 @@ public class RoleService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Cacheable(value = "getRoleById", key = "#id")
     public RoleDto getRoleById(Long id) {
         Role role = roleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Role not found"));
         return modelMapper.map(role, RoleDto.class);
     }
 
+    @Cacheable(value = "getAllRoles")
     public List<RoleDto> getAllRoles() {
         return roleRepository.findAll().stream()
                 .map(role -> modelMapper.map(role, RoleDto.class))

@@ -29,7 +29,7 @@ public class UserService {
 
 
     @CachePut(value = "userById", key = "#result.id")
-    @CacheEvict(value = {"userByEmail", "userByUsername"}, key = "#user.email + '-' + #user.username")
+    @CacheEvict(value = {"userByEmail", "userByUsername"}, key = "#user.email + '-' + #user.name")
     public UserDto saveUser(UserDto user) {
         User user1= new User();
         user1.setUsername(user.getName());
@@ -40,7 +40,7 @@ public class UserService {
         return user;
     }
 
-    @Cacheable(value = "userByUsername", key = "#username")
+    @Cacheable(value = "userByUsername", key = "#username", unless="#result == null")
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }

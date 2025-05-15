@@ -14,6 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.FilenameUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,6 +39,9 @@ public class LocalizedImageService implements LocalizedImageInterface {
     @Value("${image.storage.path}")
     private String imageStoragePath;
 
+
+    @CacheEvict(value = {"getImagesByProjectAndLanguage", "getImageById",
+            "getImagesByProject", "getImagesByLanguage"}, key = "#projectId + '-' + #languageId", allEntries = true)
     @Override
     public LocalizedImageDto saveImage(MultipartFile file, Long languageId, Long projectId, String imageKey) throws IOException {
         Language language = languageRepository.findById(languageId)
@@ -70,6 +76,7 @@ public class LocalizedImageService implements LocalizedImageInterface {
         ));
     }
 
+    @Cacheable(value = "getImageById", key = "#id")
     @Override
     public LocalizedImageDto getImageById(Long id) {
         LocalizedImage image = imageRepository.findById(id)
@@ -83,6 +90,7 @@ public class LocalizedImageService implements LocalizedImageInterface {
         return modelMapper.map(image, LocalizedImageDto.class);
     }
 
+    @Cacheable(value = "getImagesByProject", key = "#projectId")
     @Override
     public List<LocalizedImageDto> getImagesByProjectId(Long projectId) {
         modelMapper.typeMap(LocalizedImage.class, LocalizedImageDto.class).addMappings(mapper ->{
@@ -96,6 +104,7 @@ public class LocalizedImageService implements LocalizedImageInterface {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "getImagesByLanguage", key = "#languageId")
     @Override
     public List<LocalizedImageDto> getImagesByLanguageId(Long languageId) {
         return imageRepository.findByLanguage_Id(languageId)
@@ -104,6 +113,7 @@ public class LocalizedImageService implements LocalizedImageInterface {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "getImagesByProjectAndLanguage", key = "#projectId + '-' + #languageId")
     @Override
     public List<LocalizedImageDto> getImagesByProjectAndLanguage(Long projectId, Long languageId) {
         return imageRepository.findByProject_IdAndLanguage_Id(projectId, languageId)
@@ -112,6 +122,8 @@ public class LocalizedImageService implements LocalizedImageInterface {
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = {"updateImage", "getImagesByProjectAndLanguage", "getImageById",
+            "getImagesByProject", "getImagesByLanguage"}, allEntries = true)
     @Override
     public void deleteImage(Long id) throws IOException {
         LocalizedImage image = imageRepository.findById(id)
@@ -122,6 +134,9 @@ public class LocalizedImageService implements LocalizedImageInterface {
         imageRepository.deleteById(id);
     }
 
+    @CachePut(value = "updateImage", key = "#id + '-' + #imageKey")
+    @CacheEvict(value = {"getImagesByProjectAndLanguage", "getImageById",
+            "getImagesByProject", "getImagesByLanguage"}, allEntries = true)
     @Override
     public LocalizedImageDto updateImage(Long id, MultipartFile file, String imageKey) throws IOException {
         LocalizedImage image = imageRepository.findById(id)

@@ -6,6 +6,7 @@ import com.myapp.localizationApp.entity.*;
 import com.myapp.localizationApp.repository.*;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,7 @@ public class OrganizationService {
     }
 
 
+    @CacheEvict(value = "organizationByUser", key = "#organizationDto.userId")
     public OrganizationDto createOrganization(OrganizationDto organizationDto) {
         Organization organization = modelMapper.map(organizationDto, Organization.class);
 
@@ -50,6 +52,7 @@ public class OrganizationService {
     }
 
     @Transactional
+    @CacheEvict(value = {"organizationByUser", "getProjectByOrganization", "projectById", "allProject", "projectByUser", "getAverageTranslationProgressForOrganization"}, allEntries = true)
     public void assignProjectsToOrganization(Long organizationId, List<Long> projectIds) {
         Organization organization = organizationRepository.findById(organizationId)
                 .orElseThrow(() -> new RuntimeException("Organization not found"));
@@ -64,6 +67,7 @@ public class OrganizationService {
     }
 
     @Transactional
+    @Cacheable(value = "getProjectByOrganization", key = "#organizationId")
     public List<ProjectDto> getProjectsByOrganizationId(Long organizationId) {
         List<Project> projects = projectRepository.findByOrganizationId(organizationId);
 
@@ -105,7 +109,7 @@ public class OrganizationService {
     }
 
 
-    //    @Cacheable(value = "organizationByUser", key = "#userId")
+    @Cacheable(value = "organizationByUser", key = "#userId")
     public List<OrganizationDto> getOrganizationsByUserId(Long userId) {
         List<Organization> organizations = organizationRepository.findByUserId(userId);
 
@@ -120,6 +124,7 @@ public class OrganizationService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "getOrganizationById", key = "#id")
     public OrganizationDto getOrganizationById(Long id) {
         Organization organization = organizationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found with id: " + id));

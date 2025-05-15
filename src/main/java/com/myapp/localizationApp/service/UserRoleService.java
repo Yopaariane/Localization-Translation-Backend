@@ -7,6 +7,9 @@ import com.myapp.localizationApp.repository.RoleRepository;
 import com.myapp.localizationApp.repository.UserRepository;
 import com.myapp.localizationApp.repository.UserRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigInteger;
@@ -27,27 +30,32 @@ public class UserRoleService {
     @Autowired
     private RoleRepository roleRepository;
 
+    @CacheEvict(value = {"getRolesByUser", "getRolesByProject", "getUserRoleByUserIdAndProject", "getUserRoleByUserAndRole"}, allEntries = true)
     public UserRoleDto assignRoleToUser(UserRoleDto userRoleDto) {
         UserRole userRole = convertToEntity(userRoleDto);
         UserRole savedUserRole = userRoleRepository.save(userRole);
         return convertToDto(savedUserRole);
     }
 
+    @Cacheable(value = "getRolesByUser", key = "#userId")
     public List<UserRoleDto> getRolesByUserId(Long userId) {
         List<UserRole> userRoles = userRoleRepository.findByUserId(userId);
         return userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
+    @Cacheable(value = "getUserRoleByUserAndRole", key = "#userId + '-' + #roleId")
     public  List<UserRoleDto> getByUserIdAndRoleId(Long userId, Long roleId) {
             List<UserRole> userRoles = userRoleRepository.findByUserIdAndRoleId(userId, roleId);
             return userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
+    @Cacheable(value = "getUserRoleByUserIdAndProject", key = "#userId + '-' + #projectId")
     public List<UserRoleDto> getByUserIdAndProjectId(Long userId, Long projectId) {
         List<UserRole> userRoles = userRoleRepository.findByUserIdAndProjectId(userId, projectId);
         return  userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
     }
 
+    @Cacheable(value = "getRolesByProject", key = "#projectId")
         public List<UserRoleDto> getRolesByProjectId(Long projectId) {
             List<UserRole> userRoles = userRoleRepository.findByProjectId(projectId);
             return userRoles.stream().map(this::convertToDto).collect(Collectors.toList());
@@ -72,6 +80,7 @@ public class UserRoleService {
         return userRoleDto;
     }
 
+    @CacheEvict(value = {"getRolesByUser", "getRolesByProject", "getUserRoleByUserIdAndProject", "getUserRoleByUserAndRole"}, allEntries = true)
     public void deleteUserRole(Long id) {
         userRoleRepository.deleteById(id);
     }

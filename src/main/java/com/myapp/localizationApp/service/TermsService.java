@@ -18,6 +18,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -60,6 +61,34 @@ public class TermsService {
         return modelMapper.map(savedTerm, TermsDto.class);
     }
 
+    @CacheEvict(value = {"totalStringNumber", "termsByProject", "totalStrings"}, allEntries = true)
+    public void saveAll(List<TermsDto> termsDtos) {
+        List<Terms> entities = new ArrayList<>();
+
+        for (TermsDto dto : termsDtos) {
+            Terms term = modelMapper.map(dto, Terms.class);
+
+            Project project = projectRepository.findById(dto.getProjectId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + dto.getProjectId()));
+            term.setProject(project);
+
+            int stringNumber = countStrings(term.getTerm());
+            term.setStringNumber(stringNumber);
+
+            if (term.getContext() == null) {
+                term.setContext("");
+            }
+
+            entities.add(term);
+        }
+
+        termsRepository.saveAll(entities);
+
+        for (int i = 0; i < termsDtos.size(); i++) {
+            termsDtos.get(i).setId(entities.get(i).getId());
+        }
+    }
+
     @CachePut(value = "terms", key = "#termsDto.id")
     public TermsDto updateTerm(Long id, TermsDto termsDto) {
         Terms term = termsRepository.findById(id)
@@ -87,7 +116,7 @@ public class TermsService {
     }
 
 
-    @CacheEvict(value = {"totalStringNumber", "terms", "termsByProject", "totalStrings"}, allEntries = true)
+    @CacheEvict(value = {"totalStringNumber", "terms", "termsByProject", "totalStrings",}, allEntries = true)
     public void deleteTerm(Long id, Long userId) throws AccessDeniedException {
         Long projectId = termsRepository.findProjectIdByTermId(id);
         if (!permissionService.hasPermission(userId, projectId, "add, modify and delete terms")) {

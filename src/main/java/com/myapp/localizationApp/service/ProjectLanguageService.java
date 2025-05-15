@@ -36,7 +36,7 @@ public class ProjectLanguageService {
     }
 
     @CachePut(value = "projectLanguageById", key = "#result.id")
-    @CacheEvict(value = {"languageByProjectId", "projectLanByLanguageAndProject", "projectByUser"}, key = "#projectLanguageDto.projectId")
+    @CacheEvict(value = {"languageByProjectId", "projectLanByLanguageAndProject", "projectByUser"}, allEntries = true)
     public ProjectLanguageDto assignLanguageToProject(ProjectLanguageDto projectLanguageDto){
         ProjectLanguage projectLanguage = convertToEntity(projectLanguageDto);
         ProjectLanguage saveProjectLanguage = projectLanguageRepository.save(projectLanguage);
@@ -54,7 +54,7 @@ public class ProjectLanguageService {
         return  projectLanguageRepository.findById(id).map(this::convertToDto);
     }
 
-    @CacheEvict(value = {"projectLanguageById", "languageByProjectId", "projectLanByLanguageAndProject", "projectByUser"}, allEntries = true)
+    @CacheEvict(value = {"projectLanguageById", "languageByProjectId", "projectLanByLanguageAndProject", "projectByUser",  "allLanguages", "languageById"}, allEntries = true)
     public void deleteProjectLanguage( Long id){
         projectLanguageRepository.deleteById(id);
     }

@@ -38,7 +38,7 @@ public class ImportController {
         try {
             List<ImportDto> importData = parseFileToImportDto(file);
 
-            importService.processFileUpload(projectId, languageId, BigInteger.valueOf(creatorId), importData);
+            importService.processFileUpload(projectId, languageId, BigInteger.valueOf(creatorId), file);
 
             Map<String, Object> responseBody = new HashMap<>();
             responseBody.put("message", "File processed successfully.");

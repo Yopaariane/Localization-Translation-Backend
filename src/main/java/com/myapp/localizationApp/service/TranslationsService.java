@@ -81,6 +81,36 @@ public class TranslationsService {
         return modelMapper.map(savedTranslation, TranslationsDto.class);
     }
 
+    @CacheEvict(value = {"translationByTerm", "translationsByLanguage",  "averageTranslationForUser",
+            "overallTranslationForProject", "translationByTermLanguageAndCreator", "stringTranslationProgress",
+            "translationProgressFromTerm", "translationProgressForLanguage"},
+            allEntries = true)
+    public void saveAll(List<TranslationsDto> translationsDtos) {
+        List<Translations> entities = translationsDtos.stream()
+                .map(dto -> {
+                    Translations t = new Translations();
+                    t.setTranslation_text(dto.getTranslationText());
+                    t.setTerm(termsRepository.getReferenceById(dto.getTermId()));
+                    t.setLanguage(languageRepository.getReferenceById(dto.getLanguageId()));
+                    t.setCreator(userRepository.getReferenceById(dto.getCreatorId().longValue()));
+                    return t;
+                }).collect(Collectors.toList());
+
+        translationsRepository.saveAll(entities);
+    }
+
+    @CacheEvict(value = {"translationByTerm", "translationsByLanguage",  "averageTranslationForUser",
+            "overallTranslationForProject", "translationByTermLanguageAndCreator", "stringTranslationProgress",
+            "translationProgressFromTerm", "translationProgressForLanguage"},
+            allEntries = true)
+    public void updateAll(List<TranslationsDto> translationsDtos) {
+        translationsDtos.forEach(dto -> {
+            Translations existing = translationsRepository.findById(dto.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Translation not found: " + dto.getId()));
+            existing.setTranslation_text(dto.getTranslationText());
+        });
+    }
+
     @CachePut(value = "translationByTerm", key = "#id")
     @CacheEvict(value = {"translationsByLanguage", "translationProgressFromTerm",  "averageTranslationForUser", "stringTranslationProgress",
             "overallTranslationForProject", "translationByTermLanguageAndCreator", "translationProgressForLanguage"},
@@ -166,6 +196,14 @@ public class TranslationsService {
         return translationEntity == null ? null : modelMapper.map(translationEntity, TranslationsDto.class);
     }
 
+    public List<TranslationsDto> findByTermIdsAndLanguageIdAndCreatorId(List<Long> termIds, Long languageId, BigInteger creatorId) {
+        List<Translations> translations = translationsRepository.findByTermIdsAndLanguageIdAndCreatorId(termIds, languageId, creatorId.longValue());
+        return translations.stream()
+                .map(t -> modelMapper.map(t, TranslationsDto.class))
+                .collect(Collectors.toList());
+    }
+
+
 
     public Long countTranslationsByProjectId(Long projectId) {
         return translationsRepository.countTranslationsByProjectId(projectId);
@@ -241,7 +279,7 @@ public class TranslationsService {
         return calculateAverageTranslationProgress(userProjects);
     }
 
-    // @Cacheable(value = "getAverageTranslationProgressForOrganization", key = "#organizationId")
+    @Cacheable(value = "getAverageTranslationProgressForOrganization", key = "#organizationId")
     public double getAverageTranslationProgressForOrganization(Long organizationId) {
         List<ProjectDto> organizationProjects = organizationService.getProjectsByOrganizationId(organizationId);
         return calculateAverageTranslationProgress(organizationProjects);
@@ -280,4 +318,5 @@ public class TranslationsService {
 
         return Math.min((totalStringNumber * 100) / 10000, 100);
     }
+
 }

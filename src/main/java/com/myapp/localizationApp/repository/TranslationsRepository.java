@@ -36,4 +36,9 @@ public interface TranslationsRepository extends JpaRepository<Translations, Long
     Integer sumStringNumbersByOwnerId(@Param("ownerId") BigInteger ownerId);
 
     Translations findByTermIdAndLanguageIdAndCreatorId(Long termId, Long languageId, BigInteger creatorId);
+
+    @Query("SELECT t FROM Translations t WHERE t.term.id IN :termIds AND t.language.id = :languageId AND t.creator.id = :creatorId")
+    List<Translations> findByTermIdsAndLanguageIdAndCreatorId(List<Long> termIds, Long languageId, Long creatorId);
+
+
 }

@@ -40,7 +40,7 @@ public class ProjectService {
 
 
     @CachePut(value = "projectById", key = "#result.id")
-    @CacheEvict(value = "projectByUser", key = "#projectDto.ownerId")
+    @CacheEvict(value = {"projectByUser"}, key = "#projectDto.ownerId", allEntries = true)
     public ProjectDto createProject(ProjectDto projectDto){
         Project project = convertToEntity(projectDto);
         project = projectRepository.save(project);
@@ -56,6 +56,7 @@ public class ProjectService {
         return convertToDto(project);
     }
 
+    @CacheEvict(value = "projectById", key = "#project.id")
     private void assignDefaultLanguageToProject(Project project) {
         Language defaultLanguage = project.getDefaultLanguage();
         if (defaultLanguage == null) {
@@ -79,14 +80,14 @@ public class ProjectService {
                 .map(this::convertToDto);
     }
 
-    @Cacheable(value = "allProject")
+//    @Cacheable(value = "allProject")
     public List<ProjectDto> getAllProjects() {
         return projectRepository.findAllByOrganizationIsNull().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    @CacheEvict(value = {"projectById", "projectByUser"}, key = "#updatedProjectDto.projectId")
+    @CacheEvict(value = {"projectById", "projectByUser"}, allEntries = true)
     public ProjectDto updateProject(Long id, ProjectDto updatedProjectDto) {
         return projectRepository.findById(id)
                 .map(existingProject -> {

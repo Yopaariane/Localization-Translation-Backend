@@ -23,7 +23,7 @@ public class LanguageService {
                 .toList();
     }
 
-//    @Cacheable(value = "languageById", key = "#id")
+    @Cacheable(value = "languageById", key = "#id")
     public Optional<LanguageDto> getLanguageById(Long id) {
         return languageRepository.findById(id)
                 .map(this::toDto);

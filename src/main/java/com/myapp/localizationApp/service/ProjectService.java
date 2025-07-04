@@ -111,7 +111,7 @@ public class ProjectService {
                 .orElseThrow(() -> new EntityNotFoundException("Project not found with id " + id));
     }
 
-    @CacheEvict(value = {"projectByUser", "projectById"}, key = "#id")
+    @CacheEvict(value = {"projectByUser", "projectById"}, allEntries = true)
     public void deleteProject(Long id) {
         projectRepository.deleteById(id);
     }
